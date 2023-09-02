@@ -1,7 +1,15 @@
+export type Status = "idle" | "started" | "stopped";
+
 export class Chronometer {
-  status: "idle" | "started" | "stopped" = "idle";
+  status: Status = "idle";
   startTime = 0;
   stopTime = 0;
+
+  constructor(status: Status, startTime: number, stopTime: number) {
+    this.status = status;
+    this.startTime = startTime;
+    this.stopTime = stopTime;
+  }
 
   start = () => {
     if (this.status === "idle") {
@@ -9,9 +17,9 @@ export class Chronometer {
       this.stopTime = 0;
       this.status = "started";
     } else if (this.status === "stopped") {
-      this.startTime = Date.now() - (this.stopTime - this.startTime)
-      this.stopTime = 0
-      this.status = 'started'
+      this.startTime = Date.now() - (this.stopTime - this.startTime);
+      this.stopTime = 0;
+      this.status = "started";
     }
   };
 

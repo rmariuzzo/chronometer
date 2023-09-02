@@ -1,30 +1,57 @@
-import { FC, useLayoutEffect, useRef, useState } from "react";
+import { FC, useCallback, useLayoutEffect, useRef, useState } from "react";
+
 import { useChronometer } from "../hooks/useChronometer";
+import { useLocalStoredState } from "../hooks/useLocalStoredState";
+
 import styles from "./Display.module.css";
 
 export const Display: FC = () => {
-  const chronometer = useChronometer();
+  const [state, setState] = useLocalStoredState();
+  const chronometer = useChronometer(
+    state.chronometer.status,
+    state.chronometer.startTime,
+    state.chronometer.stopTime
+  );
   const [ellapsed, setEllapsed] = useState(chronometer.ellapsed());
-  const [darkMode, setDarkMode] = useState(false);
   const [movementTimedOut, setMovementTimedOut] = useState(true);
   const movementTimeoutId = useRef<NodeJS.Timeout>();
+
+  const persistChronometer = useCallback(() => {
+    if (chronometer.startTime === 0) return;
+    setState({
+      ...state,
+      chronometer: {
+        startTime: chronometer.startTime,
+        stopTime: chronometer.stopTime,
+        status: chronometer.status,
+      },
+    });
+  }, [
+    chronometer.startTime,
+    chronometer.status,
+    chronometer.stopTime,
+    setState,
+    state,
+  ]);
 
   useLayoutEffect(() => {
     setInterval(() => {
       setEllapsed(chronometer.ellapsed());
     }, 1000 / 60);
-  }, []);
+  }, [chronometer, persistChronometer]);
 
   const handleContainerClick = () => {
     chronometer.toggle();
+    persistChronometer();
   };
 
   const handleContainerDoubleClick = () => {
     chronometer.reset();
+    persistChronometer();
   };
 
   const handleContainerContextMenu = () => {
-    setDarkMode(!darkMode);
+    setState({ ...state, theme: state.theme === "light" ? "dark" : "light" });
   };
 
   const handleContainerMouseMove = () => {
@@ -39,7 +66,10 @@ export const Display: FC = () => {
 
   return (
     <div
-      className={[styles.container, darkMode ? styles.darkMode : ""].join(" ")}
+      className={[
+        styles.container,
+        state.theme === "dark" ? styles.darkMode : "",
+      ].join(" ")}
       onClick={handleContainerClick}
       onDoubleClick={handleContainerDoubleClick}
       onContextMenu={(event) => {
